@@ -152,7 +152,7 @@ def main():
         # if it's negative sentiment
         if sentiment_label == "NEGATIVE" and confidence > 0.90:
             print("Please contact a human advisor for further guidance.")
-            break
+            continue
 
         # Find closest answer
         best_question, best_answer, best_score = getBestAnser(
