@@ -4,13 +4,19 @@ from sklearn.metrics.pairwise import cosine_similarity
 from transformers import pipeline
 import numpy as np
 
-# Mini Project 1 summer 2026 
+# Mini Project 1 summer 2026  
 # Nafisa Islam (40209761), Thajanah Mailvaganam (40114270), Zaree C Hameed (21026488)
 
-# Q1: Load knowledge base CSV
-# Knowledge base used to answer student questions. 
+ 
+def getknowledgeBase(filename):
+    """
+    Loads the knowledge base from a CSV file.
 
-def load_knowledge_base(filename):
+    Parameters: 
+        filename (str) : the name of the csv file 
+
+    Returns:a tuple of two lists: questions and answers
+    """
     try:
         df = pd.read_csv(filename)
 
@@ -30,19 +36,28 @@ def load_knowledge_base(filename):
 
 
 
-# Q2: Create embeddings
-# This allows us to compare user questions with the knowledge base questions using cosine similarity.
-
-def create_embeddings(model, questions):
+def convert_questions_to_embeddings(model, questions):
+    """
+    Takes the knowledge base questions to make the embeddings ( numberical representations)
+    Parameters: 
+        model (SentenceTransformer) : the sentence transformer model to create the embeddings
+        questions (list) : list of questions from the knowledge base
+    Returns: a list of embeddings for the questions
+    """
     embeddings = model.encode(questions)
     return embeddings
 
 
-# Q3: Sentiment Analysis
-# This helps us understand the emotional tone of the user's question.
+def getSentiment(sentiment, user_question):
 
-def sentiment_detector(sentiment_model, user_question):
-    result = sentiment_model(user_question)[0]
+    """
+    Analyzes the sentiment of the user's question
+    Parameters: 
+        sentiment (pipeline) : the sentiment analysis model
+        user_question (str) : the user's question to analyze
+    Returns: a tuple of the sentiment ( NEGATIVE, NEUTRAL, or POSITIVE) and confidence score (0-100%)
+    """
+    result = sentiment(user_question)[0]
 
     label = result["label"]
     confidence = result["score"]
@@ -61,10 +76,17 @@ def sentiment_detector(sentiment_model, user_question):
 
 
 
-# Q4: Semantic Search
-# It compares the user's question embedding with the knowledge base question.
-# Returns similarity score.
-def find_best_answer(user_question, model, question_embeddings, questions, answers):
+
+def getBestAnser(user_question, model, question_embeddings, questions, answers):
+    """
+    Finds the best matching question and answer from the knowledge base based on cosine similarity.
+    Parameters:
+    user_question (str) : the user's question
+    model (SentenceTransformer) : the sentence transformer model takes the user's input/question and converts it into an embedding (numerical)
+    question_embeddings (list) : list of embeddings for the knowledge base questions
+    Returns: a tuple of the best matching question, its corresponding answer, and the similarity score
+    """
+    
     user_question_embedding = model.encode([user_question])
 
     comparison = cosine_similarity(user_question_embedding, question_embeddings)
@@ -85,16 +107,16 @@ def main():
     print("Loading Student Support AI...")
 
   
-    questions, answers = load_knowledge_base("knowledge_base.csv")
+    questions, answers = getknowledgeBase("knowledge_base.csv")
 
     
     embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
     # Create embeddings for knowledge base questions
-    question_embeddings = create_embeddings(embedding_model, questions)
+    question_embeddings = convert_questions_to_embeddings(embedding_model, questions)
 
     #  for sentiment score
-    sentiment_model = pipeline(
+    sentiment = pipeline(
         "sentiment-analysis",
         model="cardiffnlp/twitter-roberta-base-sentiment"
     )
@@ -116,7 +138,7 @@ def main():
             continue
 
         # This helps detect the sentiment 
-        sentiment_label, confidence = sentiment_detector(sentiment_model, user_question)
+        sentiment_label, confidence = getSentiment(sentiment, user_question)
 
         print(f"\nSentiment: {sentiment_label} ({confidence:.2f})")
 
@@ -125,7 +147,7 @@ def main():
             print("Recommended escalation: Contact human advisor.")
 
         # Find closest answer
-        best_question, best_answer, best_score = find_best_answer(
+        best_question, best_answer, best_score = getBestAnser(
             user_question,
             embedding_model,
             question_embeddings,
@@ -133,7 +155,7 @@ def main():
             answers
         )
 
-        print(f"Closest question: {best_question}")
+        # print(f"Closest question: {best_question}")
         print(f"Similarity score: {best_score:.2f}")
         print(f"Answer: {best_answer}")
 
