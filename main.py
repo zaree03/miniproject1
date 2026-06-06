@@ -96,7 +96,14 @@ def getBestAnser(user_question, model, question_embeddings, questions, answers):
     best_score = comparison[0][best_match_index]
 
     best_question = questions[best_match_index]
-    best_answer = answers[best_match_index]
+    
+    if best_score < 0.60:
+
+        best_answer = "Please contact a human advisor for further guidance."
+
+    else:
+
+        best_answer = answers[best_match_index]
 
     return best_question, best_answer, best_score
 
@@ -104,7 +111,7 @@ def getBestAnser(user_question, model, question_embeddings, questions, answers):
 
 
 def main():
-    print("Loading Student Support AI...")
+    print("Welcome to the Student Support AI! ")
 
   
     questions, answers = getknowledgeBase("knowledge_base.csv")
@@ -121,7 +128,7 @@ def main():
         model="cardiffnlp/twitter-roberta-base-sentiment"
     )
 
-    print("\nWelcome to Student Support AI")
+
     print("Type 'quit' to exit.")
 
     while True:
@@ -144,7 +151,8 @@ def main():
 
         # if it's negative sentiment
         if sentiment_label == "NEGATIVE" and confidence > 0.90:
-            print("Recommended escalation: Contact human advisor.")
+            print("Please contact a human advisor for further guidance.")
+            break
 
         # Find closest answer
         best_question, best_answer, best_score = getBestAnser(
